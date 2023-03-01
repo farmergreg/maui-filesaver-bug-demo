@@ -1,0 +1,32 @@
+﻿        @page "/"
+        @using CommunityToolkit.Maui.Storage;
+        @inject IFileSaver _fs
+
+        <h1>Hello, world!</h1>
+
+                Welcome to your new app.
+
+        <SurveyPrompt Title="How is Blazor working for you?" />
+
+        <button @onclick="SaveFile">Save File</button>
+
+        @code {
+            private async Task SaveFile()
+            {
+                var fileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MauiSaveFileBug.txt");
+                await File.WriteAllTextAsync(fileName, new string('Z', 10000));
+
+                const string hello = "hello.";
+
+                using var stream = new MemoryStream();
+                await stream.WriteAsync(System.Text.Encoding.UTF8.GetBytes(hello));
+                await _fs.SaveAsync(fileName, stream, CancellationToken.None); // make sure to save over top of the file filled with 'Z' characters.
+
+                var fileContents = File.ReadAllBytes(fileName);
+
+                if (fileContents.Length == hello.Length)
+                    throw new Exception("bug fixed.");// set a breakpoint here
+                else
+                    throw new Exception("bug is NOT fixed");// set a breakpoint here
+            }
+        }
